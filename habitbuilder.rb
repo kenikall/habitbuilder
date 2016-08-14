@@ -1,23 +1,35 @@
 require 'sqlite3'
 
 #create databases
-data = SQLite3::Database.new (data.db)
-create_table_cmd = <<-MAKEDBS
+data = SQLite3::Database.new ("data.db")
+create_users_table_cmd = <<-MAKEUSERS
 	CREATE TABLE IF NOT EXISTS users(
 		id INTEGER PRIMARY KEY,
 		username VARCHAR(255),
 		password VARCHAR(255),
 		name VARCHAR(255)
-	)
+	);
 	CREATE TABLE IF NOT EXISTS habits(
 		id INTEGER PRIMARY KEY,
 		user_id INT,
 		habit VARCHAR(255),
 		complete BOOLEAN,
-		date DATE
-	)
-MAKEDBS
-
+		date DATE,
+		FOREIGN KEY(user_id) REFERENCES users(id)
+	);
+MAKEUSERS
+create_habits_table_cmd = <<-MAKEHABITS
+	CREATE TABLE IF NOT EXISTS habits(
+		id INTEGER PRIMARY KEY,
+		user_id INT,
+		habit VARCHAR(255),
+		complete BOOLEAN,
+		date DATE,
+		FOREIGN KEY(user_id) REFERENCES users(id)
+	);
+MAKEHABITS
+data.execute(create_users_table_cmd)
+data.execute(create_habits_table_cmd)
 #get user name 
 #get user password
 
@@ -159,13 +171,57 @@ end
 def welcome
 end
 
-def newuser
+def newuser(data)
+	puts "Welclome to Habit Tracker. Before we get started let's get some information."
+	
+	validinput = false
+	until validinput
+		puts "What should we call you?"
+		name = gets.chomp
+		puts "Are you happy with #{name}?"
+		confirm = gets.chomp.downcase
+		if confirm == "yes"
+			validinput = true
+		elsif "no"
+		else
+			"Please enter either yes or no."
+		end 	
+	end
+
+	validinput = false
+	until validinput
+		puts "Nice to meet you #{name}. What username would you like to login with?"
+		user = gets.chomp
+		puts "Are you happy with #{user}?"
+		confirm = gets.chomp.downcase
+		if confirm == "yes"
+			validinput = true
+		elsif "no"
+		else
+			"Please enter either yes or no."
+		end 	
+	end
+
+	validinput = false
+	until validinput
+		puts "What password woudld you like to use #{name}?"
+		password = gets.chomp
+		puts "Please retype the password to confirm."
+		password2 = gets.chomp
+		if password == password2
+			data.execute("INSERT INTO users (name, username, password) VALUES (?, ?, ?)", [name, user, password])
+		 	validinput =true
+		else
+			"Those passwords did not match. Please try again."
+		end 	
+	end
+
 end
 #intro options
 #create account
 #sign in
 #about
-def intro
+def intro(data)
 	puts"
 ╔═════════════════════════════════════════════════════════════════════════╗
 ║                                                                         ║
@@ -185,7 +241,8 @@ puts"║                                                                        
 	until validinput
 	 	input = gets.chomp
 		if input == "1"
-			validinput = true		
+			validinput = true
+			newuser(data)		
 		elsif input == "2"
 			validinput = true
 		elsif input == "3"
@@ -197,4 +254,4 @@ puts"║                                                                        
 	end 
 end
 
-intro()
+intro(data)
