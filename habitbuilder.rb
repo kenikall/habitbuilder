@@ -159,16 +159,51 @@ def learnmore
 		end	
 	end	
 end
-
-def login
-	puts "what is your user name?"
-	username = gets.chomp.downcase
-
-	puts "what is your password?"
-	password = gets.chomp.downcase
+def loginverify(data)
+	puts "Would you like to:"
+	puts "1. Create a new account."
+	puts "2. Try again."
+	input = gets.chomp
+	if  input == "1"
+		newuser(data)
+	elsif input == "2"
+		login(data)
+	else
+		puts "I don't understand that input"
+		loginverify()
+	end
 end
 
-def welcome
+def login(data)
+	
+		puts "what is your username?"
+		user = gets.chomp.downcase
+
+		test = data.execute ("SELECT * FROM users WHERE username = '#{user}'")
+		p test.count 
+		#= test[0]
+		if test.count == 0
+			puts "I don't recognize that name"
+			loginverify(data)
+		else test = test[0]
+			puts "what is your password?"
+			password = gets.chomp.downcase
+			if password == test[2]
+				welcome(data, test[3])
+			else
+				validinput = false
+				until validinput
+					puts "Your username and password do not match"
+					loginverify(data)
+				end 
+			end
+		end 
+
+end
+
+def welcome(data, name)
+	puts "Welcome to Habit Tracker #{name}"
+	stop = gets.chomp
 end
 
 def newuser(data)
@@ -188,12 +223,13 @@ def newuser(data)
 		end 	
 	end
 	puts "Nice to meet you #{name}."
-	
+
 	validinput = false
 	until validinput
 		puts "What username would you like to login with?"
 		user = gets.chomp
-		if data.execute ("SELECT username FROM users") == nil
+		test = data.execute ("SELECT * FROM users WHERE username = '#{user}'")
+		if  test.count == 0
 			puts "Are you happy with #{user}?"
 			confirm = gets.chomp.downcase
 			if confirm == "yes"
@@ -220,7 +256,7 @@ def newuser(data)
 			"Those passwords did not match. Please try again."
 		end 	
 	end
-
+	welcome(data, name)
 end
 #intro options
 #create account
@@ -250,6 +286,7 @@ puts"║                                                                        
 			newuser(data)		
 		elsif input == "2"
 			validinput = true
+			login(data)
 		elsif input == "3"
 			validinput = true
 			learnmore()
