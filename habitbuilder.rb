@@ -187,19 +187,24 @@ def newuser(data)
 			"Please enter either yes or no."
 		end 	
 	end
-
+	puts "Nice to meet you #{name}."
+	
 	validinput = false
 	until validinput
-		puts "Nice to meet you #{name}. What username would you like to login with?"
+		puts "What username would you like to login with?"
 		user = gets.chomp
-		puts "Are you happy with #{user}?"
-		confirm = gets.chomp.downcase
-		if confirm == "yes"
+		if data.execute ("SELECT username FROM users") == nil
+			puts "Are you happy with #{user}?"
+			confirm = gets.chomp.downcase
+			if confirm == "yes"
 			validinput = true
-		elsif "no"
+			elsif "no"
+			else
+				"Please enter either yes or no."
+			end 
 		else
-			"Please enter either yes or no."
-		end 	
+			puts "The username #{user} hs already been taken. Please choose another."
+		end 
 	end
 
 	validinput = false
