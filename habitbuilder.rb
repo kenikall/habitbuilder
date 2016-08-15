@@ -177,7 +177,7 @@ end
 
 def login(data)
 	puts "what is your username?"
-	user = gets.chomp.downcase
+	user = gets.chomp
 
 	test = data.execute ("SELECT * FROM users WHERE username = '#{user}'")
 
@@ -186,7 +186,7 @@ def login(data)
 		loginverify(data)
 	else test = test[0]
 		puts "what is your password?"
-		password = gets.chomp.downcase
+		password = gets.chomp
 		if password == test[2]
 			welcome(data, test[0])
 		else
@@ -201,8 +201,8 @@ end
 
 def welcome(data, id)
 	user = data.execute ("SELECT * FROM users WHERE id = '#{id}'")
-	user = user[0]
 
+	user = user[0]
 	puts"
 ╔═════════════════════════════════════════════════════════════════════════╗
 ║                                                                         ║
@@ -210,11 +210,15 @@ def welcome(data, id)
 ║                                                                         ║
 ║                                                                         ║
 ║                                                                         ║
-║                  1. Check on your progress                              ║
-║                  2. Add a new goal                                      ║
-║                  3. See trending goals                                  ║
-║                  4. Check your achivements                              ║
 ║                                                                         ║
+║                                                                         ║
+║                                                                         ║
+║                                                                         ║
+║                  1. Check on your progress                              ║
+║                  2. Add a new goal                                      ║"
+# ║                  3. See trending goals                                  ║
+# ║                  4. Check your achivements                              ║
+puts"║                                                                         ║
 ╚═════════════════════════════════════════════════════════════════════════╝"
 	validinput = false
 
@@ -226,12 +230,12 @@ def welcome(data, id)
 		elsif input == "2"
 			validinput = true
 			newgoal(data, user)
-		elsif input == "3"
-			validinput = true
-			trends(user)
-		elsif input == "4"
-			validinput = true
-			achivements(user)
+		# elsif input == "3"
+		# 	validinput = true
+		# 	trends(user)
+		# elsif input == "4"
+		# 	validinput = true
+		# 	achivements(user)
 		else
 			puts "Enter 1 to check your progress, 2 to add a goal, 3 to see what goals are trending, or 4 to see your achivements."
 		end		
@@ -241,20 +245,22 @@ end
 def progress(data, user)
 	goal = data.execute ("SELECT * FROM habits WHERE user_id = '#{user[0]}'")
 	today = data.execute ("SELECT date('now')")
-	p goal
-	
+	today = today[0]
+	today = today[0]
+	today = today.to_s
+
 	num = 1
 	puts"
 ╔═════════════════════════════════════════════════════════════════════════╗
 ║                                                                         ║
 ║Current Goals:                                       Last Completed:     ║"
 goal.each do |x|
-	if x[5]==nil
+	if x[4]==nil
 		puts "║#{num}. #{x[2].ljust(49)} #{"NEW".ljust(20)}║"
-	elsif x[2] != today
-		puts "║#{num}. #{x[2].ljust(50)} #{x[5].ljust(20)}║"
+	elsif x[4] != today
+		puts "║#{num}. #{x[2].ljust(49)} #{x[4].ljust(20)}║"
 	else
-		puts "║#{num}. #{x[2].ljust(50)} #{"TODAY".ljust(20)}║"
+		puts "║#{num}. #{x[2].ljust(49)} #{"TODAY".ljust(20)}║"
 	end
 	num +=1
 end
@@ -262,10 +268,22 @@ puts"║                                                                        
 ║                                                                         ║
 ║                                                                         ║
 ║                  Type a goal's number to mark it as complete.           ║
-║                  #{num+1}. To go to the main menu                               ║
+║                  #{num}. To go to the main menu                              ║
 ║                                                                         ║
 ╚═════════════════════════════════════════════════════════════════════════╝"	
-	choice = gets.chomp
+	validinput = false
+
+	until validinput
+		choice = gets.chomp.to_i
+		if choice <= goal.count
+			data.execute ("UPDATE habits SET date = '#{today}' WHERE id = '#{goal[choice-1][0]}'")
+			progress(data, user)	
+		elsif choice == num
+			welcome(data, user[0])
+		else
+			puts "Please enter a number between 1 and #{num}."
+		end	
+	end	
 end
 
 def newgoal(data, user)
@@ -286,14 +304,15 @@ def newgoal(data, user)
 		welcome(data, user[0])
 	else
 		data.execute("INSERT INTO habits (user_id, habit, complete) VALUES (?, ?, ?)", [user[0], goal, 0])
+		newgoal(data, user)
 	end
 end
 
-def trends(user)
-end
+# def trends(user)
+# end
 
-def achivements(user)
-end
+# def achivements(user)
+# end
 
 def newuser(data)
 	puts "Welclome to Habit Tracker. Before we get started let's get some information."
@@ -306,7 +325,7 @@ def newuser(data)
 		confirm = gets.chomp.downcase
 		if confirm == "yes"
 			validinput = true
-		elsif "no"
+		elsif confirm == "no"
 		else
 			"Please enter either yes or no."
 		end 	
@@ -323,7 +342,7 @@ def newuser(data)
 			confirm = gets.chomp.downcase
 			if confirm == "yes"
 			validinput = true
-			elsif "no"
+			elsif confirm == "no"
 			else
 				"Please enter either yes or no."
 			end 
@@ -334,7 +353,7 @@ def newuser(data)
 
 	validinput = false
 	until validinput
-		puts "What password woudld you like to use #{name}?"
+		puts "What password would you like to use #{name}?"
 		password = gets.chomp
 		puts "Please retype the password to confirm."
 		password2 = gets.chomp
