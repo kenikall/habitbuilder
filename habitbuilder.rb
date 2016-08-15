@@ -25,6 +25,7 @@ create_habits_table_cmd = <<-MAKEHABITS
 		habit VARCHAR(255),
 		complete BOOLEAN,
 		date DATE,
+		streak INT,
 		FOREIGN KEY(user_id) REFERENCES users(id)
 	);
 MAKEHABITS
@@ -175,35 +176,123 @@ def loginverify(data)
 end
 
 def login(data)
-	
-		puts "what is your username?"
-		user = gets.chomp.downcase
+	puts "what is your username?"
+	user = gets.chomp.downcase
 
-		test = data.execute ("SELECT * FROM users WHERE username = '#{user}'")
-		p test.count 
-		#= test[0]
-		if test.count == 0
-			puts "I don't recognize that name"
-			loginverify(data)
-		else test = test[0]
-			puts "what is your password?"
-			password = gets.chomp.downcase
-			if password == test[2]
-				welcome(data, test[3])
-			else
-				validinput = false
-				until validinput
-					puts "Your username and password do not match"
-					loginverify(data)
-				end 
-			end
-		end 
+	test = data.execute ("SELECT * FROM users WHERE username = '#{user}'")
 
+	if test.count == 0
+		puts "I don't recognize that name"
+		loginverify(data)
+	else test = test[0]
+		puts "what is your password?"
+		password = gets.chomp.downcase
+		if password == test[2]
+			welcome(data, test[0])
+		else
+			validinput = false
+			until validinput
+				puts "Your username and password do not match"
+				loginverify(data)
+			end 
+		end
+	end 
 end
 
-def welcome(data, name)
-	puts "Welcome to Habit Tracker #{name}"
-	stop = gets.chomp
+def welcome(data, id)
+	user = data.execute ("SELECT * FROM users WHERE id = '#{id}'")
+	user = user[0]
+
+	puts"
+╔═════════════════════════════════════════════════════════════════════════╗
+║                                                                         ║
+║#{"Welcome Back #{user[3]}".center(73)}║
+║                                                                         ║
+║                                                                         ║
+║                                                                         ║
+║                  1. Check on your progress                              ║
+║                  2. Add a new goal                                      ║
+║                  3. See trending goals                                  ║
+║                  4. Check your achivements                              ║
+║                                                                         ║
+╚═════════════════════════════════════════════════════════════════════════╝"
+	validinput = false
+
+	until validinput
+	 	input = gets.chomp
+		if input == "1"
+			validinput = true
+			progress(data, user)		
+		elsif input == "2"
+			validinput = true
+			newgoal(data, user)
+		elsif input == "3"
+			validinput = true
+			trends(user)
+		elsif input == "4"
+			validinput = true
+			achivements(user)
+		else
+			puts "Enter 1 to check your progress, 2 to add a goal, 3 to see what goals are trending, or 4 to see your achivements."
+		end		
+	end 
+end
+
+def progress(data, user)
+	goal = data.execute ("SELECT * FROM habits WHERE user_id = '#{user[0]}'")
+	today = data.execute ("SELECT date('now')")
+	p goal
+	
+	num = 1
+	puts"
+╔═════════════════════════════════════════════════════════════════════════╗
+║                                                                         ║
+║Current Goals:                                       Last Completed:     ║"
+goal.each do |x|
+	if x[5]==nil
+		puts "║#{num}. #{x[2].ljust(49)} #{"NEW".ljust(20)}║"
+	elsif x[2] != today
+		puts "║#{num}. #{x[2].ljust(50)} #{x[5].ljust(20)}║"
+	else
+		puts "║#{num}. #{x[2].ljust(50)} #{"TODAY".ljust(20)}║"
+	end
+	num +=1
+end
+puts"║                                                                         ║
+║                                                                         ║
+║                                                                         ║
+║                  Type a goal's number to mark it as complete.           ║
+║                  #{num+1}. To go to the main menu                               ║
+║                                                                         ║
+╚═════════════════════════════════════════════════════════════════════════╝"	
+	choice = gets.chomp
+end
+
+def newgoal(data, user)
+	goals = data.execute ("SELECT * FROM habits WHERE user_id = '#{user[0]}'")
+	if goals.count == 0
+		puts "Let's get started by coming up with habits you want to form or break."
+	elsif goals.count == 1 
+		puts "Your current goal is:"
+	elsif goals.count > 1 
+		puts "Your current goals are:"
+	end 
+
+	goals.each{|x|puts "#{x[2]}"}
+	puts "\n\nAdd a new goal by typing it here. Go to the main menu by typing BACK."
+
+	goal = gets.chomp
+	if goal == "BACK"
+		welcome(data, user[0])
+	else
+		data.execute("INSERT INTO habits (user_id, habit, complete) VALUES (?, ?, ?)", [user[0], goal, 0])
+	end
+end
+
+def trends(user)
+end
+
+def achivements(user)
 end
 
 def newuser(data)
